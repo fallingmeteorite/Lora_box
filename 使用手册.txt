@@ -1,0 +1,175 @@
+#
+#
+#
+#
+注意：运行时请关闭所有在运行的命令窗口和python文件。
+不然可能会发生错误！
+请看完之后在操作。
+操作时,按顺序！！！
+#
+#
+#
+#
+留言(遗言):如果你有能力和想法。可以试试开启DeepSpeed(能极大的减少显存占用)
+deepspeed-0.8.0-py3-none-any.whl(我已经编译好，且安装了的)
+DeepSpeed文件夹(里面有DeepSpeed的配置文件--config.json)
+剩下的问题我也没解决(因为还有其他事情要做，没有那么多时间)
+5天，从149行报错修好到了399行。
+以后这个整合包可能不会在改了。
+#
+#
+#
+#
+============================================
+开始之前请先打开命令行输入conda
+如果报错，请检查Anaconda软件是否安装正确。
+#
+#
+#
+#
+！！！第一步：装虚拟环境！！！
+进入到DR文件夹
+找到DEMO.exe文件双击
+等待软件打开。
+点击“安装虚拟环境”
+直到出现
+Press any key to continue . . .
+按任意键退出（或者直接关闭）
+============================================
+！！！第二步：安装！！！
+先点击“启动安装程序”
+安装会有点慢，请耐心等待
+=============================================
+！！！！！下面有许多设置，按我的来，懂的可以自己改！！！！！
+#
+#
+#
+#
+出现"accelerate config"时，按回车（Enter键）
+#
+#
+#
+#
+出现：
+which compute environment are you running?
+Please select a choice using the arrow or number keys, and selecting with enter
+ * This machinee
+    AWS (Amazon SageMaker)
+按按回车（Enter键）
+#
+#
+#
+#
+然后出现：
+Which type of machine are you using?
+Please select a choice using the arrow or number keys, and selecting with enter
+ * No distributed training
+    multi-CPU
+    multi-GPU
+    TPU
+    MPS
+按回车（Enter键）
+#
+#
+#
+#
+然后出现：
+Do you want to run your training on CPU only (even if a GPU is available)? [yes/NO]:  
+输入no
+按回车（Enter键）
+#
+#
+#
+#
+然后出现：
+Do you wish to optimize your script with torch dynamo?[yes/NO]:  
+输入 no
+#
+#
+#
+#
+然后出现：
+Do you want to use DeepSpeed? [yes/NO]:  
+输入 no
+按回车（Enter键）
+#
+#
+#
+#
+然后出现：
+What GPU(s) (by id) should be used for training on this machine as a comma-seperated list? [all]:   
+按回车（Enter键）            
+#
+#
+#
+#
+然后出现：
+Do you wish to use FP16 or BF16 (mixed precision)?
+Please select a choice using the arrow or number keys, and selecting with enter
+ * noo                                                                                                                      
+   fp16                                                                                                                    
+   bf16
+按数字键1,按回车（Enter键）                                                                                                     
+============================================
+等到命令行出现“Press any key to continue . . .”
+按任意键退出。
+设置结束！！！
+============================================
+！！！第三步：启动！！！
+选择你要启动的
+（1）只启动LORA训练
+（2）启动DreamBooth含有LORA
+二选一，点击按钮。
+待命令窗口出现“To create a public link, set `share=True` in `launch()`.”
+在浏览器输入网址“http://127.0.0.1:7860”
+进入到界面。
+（两个都如此操作）
+============================================
+！！！教程！！！
+点击"进入教程网页"按钮
+将会跳转到网页
+教程适用于第二个启动
+即（2）启动DreamBooth含有LORA
+============================================
+！！！退出！！！
+等到要关闭时，点击“关闭所有已启动的训练”按钮
+在点击“退出程序”按钮，关闭界面。
+============================================
+问题解答：
+A:怎么使用？
+B:程序窗口的图片就是，去B站找。
+================
+A:启动时，出现“你已经开启了，点我退出”怎么办？
+B:这表示你已经启动，请直接访问网址 http://127.0.0.1:7860。
+================
+A:确定没启动，但启动时，出现“你已经开启了，点我退出”怎么办？
+B:点击“关闭所有已启动的训练”在重试。
+================
+A:训练时报错：The paging file is too small for this operation to complete. Error loading "XXXXX" or one of its dependencies.
+翻译为页面文件太小，无法完成操作
+B:按照这个链接https://blog.csdn.net/JustPeanut/article/details/119143604  加大虚拟内存！！！
+================
+A:报错：
+Looking in indexes: https://pypi.tuna.tsinghua.edu.cn/simple
+Collecting git+https://github.com/huggingface/Megatron-LM.git
+  Cloning https://github.com/huggingface/Megatron-LM.git to c:\users\23276\appdata\local\temp\pip-req-build-m7yp1y_k
+  Running command git clone --filter=blob:none --quiet https://github.com/huggingface/Megatron-LM.git 'C:\Users\23276\AppData\Local\Temp\pip-req-build-m7yp1y_k'
+  fatal: unable to access 'https://github.com/huggingface/Megatron-LM.git/': Failed to connect to github.com port 443 after 21105 ms: Timed out
+  error: subprocess-exited-with-error
+
+  × git clone --filter=blob:none --quiet https://github.com/huggingface/Megatron-LM.git 'C:\Users\23276\AppData\Local\Temp\pip-req-build-m7yp1y_k' did not run successfully.
+  │ exit code: 128
+  ╰─> See above for output.
+
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+error: subprocess-exited-with-error
+
+× git clone --filter=blob:none --quiet https://github.com/huggingface/Megatron-LM.git 'xxxx did not run successfully.
+│ exit code: 128
+╰─> See above for output.
+
+note: This error originates from a subprocess, and is likely not a problem with pip.
+B:请开加速器，群里的github加速器
+==================
+！！！！如果出现在训练时的问题，请问下大佬，我只是为你准备好了软件。！！！！
+！！！！最后，感谢使用！！！！
