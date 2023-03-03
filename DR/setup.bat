@@ -1,7 +1,8 @@
 @echo
 CALL activate %~dp0venv
 pip list
-pip install torch==1.12.1+cu116 torchvision==0.13.1+cu116 --extra-index-url https://download.pytorch.org/whl/cu116 --no-warn-script-location
+pip uninstall 1.12.1+cu116 torchvision==0.13.1+cu116
+pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 --extra-index-url https://download.pytorch.org/whl/
 cd accelerate-main
 python setup.py install
 cd..
