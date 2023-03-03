@@ -10,16 +10,6 @@
 #
 #
 #
-留言(遗言):如果你有能力和想法。可以试试开启DeepSpeed(能极大的减少显存占用)
-deepspeed-0.8.0-py3-none-any.whl(我已经编译好，且安装了的)
-DeepSpeed文件夹(里面有DeepSpeed的配置文件--config.json)
-剩下的问题我也没解决(因为还有其他事情要做，没有那么多时间)
-5天，从149行报错修好到了399行。
-以后这个整合包可能不会在改了。
-#
-#
-#
-#
 ============================================
 开始之前请先打开命令行输入conda
 如果报错，请检查Anaconda软件是否安装正确。
@@ -55,7 +45,7 @@ which compute environment are you running?
 Please select a choice using the arrow or number keys, and selecting with enter
  * This machinee
     AWS (Amazon SageMaker)
-按按回车（Enter键）
+按回车（Enter键）
 #
 #
 #
