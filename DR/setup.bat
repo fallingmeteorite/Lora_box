@@ -9,6 +9,7 @@ cd lion-pytorch-main
 python setup.py install
 pip install --use-pep517 --upgrade -r DE\requirements.txt --no-warn-script-location -i https://pypi.tuna.tsinghua.edu.cn/simple
 pip install xformers-0.0.16-cp310-cp310-win_amd64.whl
+pip install basicsr==1.4.2
 python tools\cudann_1.8_install.py
 copy .\bitsandbytes_windows\*.dll .\venv\Lib\site-packages\bitsandbytes\
 copy .\bitsandbytes_windows\cextension.py .\venv\Lib\site-packages\bitsandbytes\cextension.py
