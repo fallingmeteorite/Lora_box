@@ -1,4 +1,4 @@
 CALL activate %~dp0venv
-cd fastTagger
+cd fastTagger\stable-diffusion-webui
 python fastTagger.py
-pause
+pause 
