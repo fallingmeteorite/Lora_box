@@ -214,6 +214,7 @@ def open_config_file(
         # load variables from JSON file
         with open(file_path, 'r') as f:
             my_data_db = json.load(f)
+            my_data = json.load(f)
             print('Loading config...')
             # Update values to fix deprecated use_8bit_adam checkbox and set appropriate optimizer if it is set to True
             my_data = update_optimizer(my_data)
