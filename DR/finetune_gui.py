@@ -18,6 +18,13 @@ from library.common_gui import (
     gradio_source_model,
     color_aug_changed,
     run_cmd_training,
+    set_legacy_8bitadam,
+    update_optimizer,
+)
+from library.tensorboard_gui import (
+    gradio_tensorboard,
+    start_tensorboard,
+    stop_tensorboard,
 )
 from library.utilities import utilities_tab
 
@@ -84,8 +91,11 @@ def save_configuration(
     bucket_no_upscale,
     random_crop,
     bucket_reso_steps,
-    caption_dropout_every_n_epochs, caption_dropout_rate,
+    caption_dropout_every_n_epochs,
+    caption_dropout_rate,
     optimizer,
+    optimizer_args,
+    noise_offset,
 ):
     # Get list of function parameters and values
     parameters = list(locals().items())
@@ -188,8 +198,11 @@ def open_config_file(
     bucket_no_upscale,
     random_crop,
     bucket_reso_steps,
-    caption_dropout_every_n_epochs, caption_dropout_rate,
+    caption_dropout_every_n_epochs,
+    caption_dropout_rate,
     optimizer,
+    optimizer_args,
+    noise_offset,
 ):
     # Get list of function parameters and values
     parameters = list(locals().items())
@@ -197,21 +210,22 @@ def open_config_file(
     original_file_path = file_path
     file_path = get_file_path(file_path)
 
-    if file_path != '' and file_path != None:
-        print(f'Loading config file {file_path}')
+    if not file_path == '' and not file_path == None:
         # load variables from JSON file
         with open(file_path, 'r') as f:
-            my_data_ft = json.load(f)
+            my_data_db = json.load(f)
+            print('Loading config...')
+            # Update values to fix deprecated use_8bit_adam checkbox and set appropriate optimizer if it is set to True
+            my_data = update_optimizer(my_data)
     else:
-        file_path = original_file_path   # In case a file_path was provided and the user decide to cancel the open action
-        my_data_ft = {}
+        file_path = original_file_path  # In case a file_path was provided and the user decide to cancel the open action
+        my_data_db = {}
 
     values = [file_path]
     for key, value in parameters:
-        # Set the value in the dictionary to the corresponding value in `my_data_ft`, or the default value if not found
+        # Set the value in the dictionary to the corresponding value in `my_data`, or the default value if not found
         if not key in ['file_path']:
-            values.append(my_data_ft.get(key, value))
-    # print(values)
+            values.append(my_data_db.get(key, value))
     return tuple(values)
 
 
@@ -270,8 +284,11 @@ def train_model(
     bucket_no_upscale,
     random_crop,
     bucket_reso_steps,
-    caption_dropout_every_n_epochs, caption_dropout_rate,
+    caption_dropout_every_n_epochs,
+    caption_dropout_rate,
     optimizer,
+    optimizer_args,
+    noise_offset,
 ):
     # create caption json file
     if generate_caption_database:
@@ -397,6 +414,7 @@ def train_model(
         caption_extension=caption_extension,
         cache_latents=cache_latents,
         optimizer=optimizer,
+        optimizer_args=optimizer_args,
     )
 
     run_cmd += run_cmd_advanced_training(
@@ -421,6 +439,7 @@ def train_model(
         bucket_reso_steps=bucket_reso_steps,
         caption_dropout_every_n_epochs=caption_dropout_every_n_epochs,
         caption_dropout_rate=caption_dropout_rate,
+        noise_offset=noise_offset,
     )
 
     print(run_cmd)
@@ -576,6 +595,7 @@ def finetune_tab():
             caption_extension,
             cache_latents,
             optimizer,
+            optimizer_args,
         ) = gradio_training(learning_rate_value='1e-5')
         with gr.Row():
             dataset_repeats = gr.Textbox(label='Dataset repeats', value=40)
@@ -607,15 +627,34 @@ def finetune_tab():
                 bucket_no_upscale,
                 random_crop,
                 bucket_reso_steps,
-                caption_dropout_every_n_epochs, caption_dropout_rate,
+                caption_dropout_every_n_epochs,
+                caption_dropout_rate,
+                noise_offset,
             ) = gradio_advanced_training()
             color_aug.change(
                 color_aug_changed,
                 inputs=[color_aug],
                 outputs=[cache_latents],  # Not applicable to fine_tune.py
             )
+        optimizer.change(
+            set_legacy_8bitadam,
+            inputs=[optimizer, use_8bit_adam],
+            outputs=[optimizer, use_8bit_adam],
+        )
 
-    button_run = gr.Button('Train model')
+    button_run = gr.Button('Train model', variant='primary')
+
+    # Setup gradio tensorboard buttons
+    button_start_tensorboard, button_stop_tensorboard = gradio_tensorboard()
+
+    button_start_tensorboard.click(
+        start_tensorboard,
+        inputs=logging_dir,
+    )
+
+    button_stop_tensorboard.click(
+        stop_tensorboard,
+    )
 
     settings_list = [
         pretrained_model_name_or_path,
@@ -672,8 +711,11 @@ def finetune_tab():
         bucket_no_upscale,
         random_crop,
         bucket_reso_steps,
-        caption_dropout_every_n_epochs, caption_dropout_rate,
+        caption_dropout_every_n_epochs,
+        caption_dropout_rate,
         optimizer,
+        optimizer_args,
+        noise_offset,
     ]
 
     button_run.click(train_model, inputs=settings_list)
@@ -715,16 +757,19 @@ def UI(**kwargs):
             utilities_tab(enable_dreambooth_tab=False)
 
     # Show the interface
-    launch_kwargs={}
+    launch_kwargs = {}
     if not kwargs.get('username', None) == '':
-        launch_kwargs["auth"] = (kwargs.get('username', None), kwargs.get('password', None))
+        launch_kwargs['auth'] = (
+            kwargs.get('username', None),
+            kwargs.get('password', None),
+        )
     if kwargs.get('server_port', 0) > 0:
-        launch_kwargs["server_port"] = kwargs.get('server_port', 0)
-    if kwargs.get('inbrowser', False):        
-        launch_kwargs["inbrowser"] = kwargs.get('inbrowser', False)
+        launch_kwargs['server_port'] = kwargs.get('server_port', 0)
+    if kwargs.get('inbrowser', False):
+        launch_kwargs['inbrowser'] = kwargs.get('inbrowser', False)
     print(launch_kwargs)
     interface.launch(**launch_kwargs)
-        
+
 
 if __name__ == '__main__':
     # torch.cuda.set_per_process_memory_fraction(0.48)
@@ -736,10 +781,20 @@ if __name__ == '__main__':
         '--password', type=str, default='', help='Password for authentication'
     )
     parser.add_argument(
-        '--server_port', type=int, default=0, help='Port to run the server listener on'
+        '--server_port',
+        type=int,
+        default=0,
+        help='Port to run the server listener on',
     )
-    parser.add_argument("--inbrowser", action="store_true", help="Open in browser")
+    parser.add_argument(
+        '--inbrowser', action='store_true', help='Open in browser'
+    )
 
     args = parser.parse_args()
 
-    UI(username=args.username, password=args.password, inbrowser=args.inbrowser, server_port=args.server_port)
+    UI(
+        username=args.username,
+        password=args.password,
+        inbrowser=args.inbrowser,
+        server_port=args.server_port,
+    )
