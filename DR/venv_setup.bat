@@ -11,8 +11,8 @@ powershell curl -o "%exename%" "%downurl%"
 
 set curpath=%~dp0 
 cd /d %curpath%
-set exename=xformers-0.0.17%2Bb89a493.d20230304-cp310-cp310-win_amd64.whl
-set downurl=https://huggingface.co/Fallingmeteorite/xformers-0.0.17/resolve/main/xformers-0.0.17%2Bb89a493.d20230304-cp310-cp310-win_amd64.whl
+set exename=xformers-0.0.17+b89a493.d20230304-cp310-cp310-win_amd64.whl
+set downurl=https://huggingface.co/Fallingmeteorite/xformers-0.0.17/resolve/main/xformers-0.0.17+b89a493.d20230304-cp310-cp310-win_amd64.whl
 powershell curl -o "%exename%" "%downurl%"
 
 conda create --prefix=%~dp0venv python=3.10.6 -y
