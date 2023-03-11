@@ -24,8 +24,8 @@ from library.common_gui import (
     gradio_config,
     gradio_source_model,
     run_cmd_training,
-    set_legacy_8bitadam,
-    update_optimizer,
+    # set_legacy_8bitadam,
+    update_my_data,
 )
 from library.dreambooth_folder_creation_gui import (
     gradio_dreambooth_folder_creation_tab,
@@ -40,6 +40,7 @@ from library.utilities import utilities_tab
 from library.merge_lora_gui import gradio_merge_lora_tab
 from library.verify_lora_gui import gradio_verify_lora_tab
 from library.resize_lora_gui import gradio_resize_lora_tab
+from library.sampler_gui import sample_gradio_config, run_cmd_sample
 from easygui import msgbox
 
 folder_symbol = '\U0001f4c2'  # 📂
@@ -47,18 +48,6 @@ refresh_symbol = '\U0001f504'  # 🔄
 save_style_symbol = '\U0001f4be'  # 💾
 document_symbol = '\U0001F4C4'   # 📄
 path_of_this_folder = os.getcwd()
-
-def getlocon(existance):
-    now_path = os.getcwd()
-    if existance:
-        print('Checking LoCon script version...')
-        os.chdir(os.path.join(path_of_this_folder, 'locon'))
-        os.system('git pull')
-        os.chdir(now_path)
-    else:
-        os.chdir(path_of_this_folder)
-        os.system('git clone https://github.com/KohakuBlueleaf/LoCon.git locon')
-        os.chdir(now_path)
 
 
 def save_configuration(
@@ -89,7 +78,7 @@ def save_configuration(
     full_fp16,
     no_token_padding,
     stop_text_encoder_training,
-    use_8bit_adam,
+    # use_8bit_adam,
     xformers,
     save_model_as,
     shuffle_caption,
@@ -122,8 +111,15 @@ def save_configuration(
     caption_dropout_every_n_epochs,
     caption_dropout_rate,
     optimizer,
-    optimizer_args,noise_offset, 
-    locon=0, conv_dim=0, conv_alpha=0,
+    optimizer_args,
+    noise_offset,
+    LoRA_type,
+    conv_dim,
+    conv_alpha,
+    sample_every_n_steps,
+    sample_every_n_epochs,
+    sample_sampler,
+    sample_prompts,additional_parameters,
 ):
     # Get list of function parameters and values
     parameters = list(locals().items())
@@ -197,7 +193,7 @@ def open_configuration(
     full_fp16,
     no_token_padding,
     stop_text_encoder_training,
-    use_8bit_adam,
+    # use_8bit_adam,
     xformers,
     save_model_as,
     shuffle_caption,
@@ -230,8 +226,15 @@ def open_configuration(
     caption_dropout_every_n_epochs,
     caption_dropout_rate,
     optimizer,
-    optimizer_args,noise_offset, 
-    locon=0, conv_dim=0, conv_alpha=0,
+    optimizer_args,
+    noise_offset,
+    LoRA_type,
+    conv_dim,
+    conv_alpha,
+    sample_every_n_steps,
+    sample_every_n_epochs,
+    sample_sampler,
+    sample_prompts,additional_parameters,
 ):
     # Get list of function parameters and values
     parameters = list(locals().items())
@@ -245,7 +248,7 @@ def open_configuration(
             my_data = json.load(f)
             print('Loading config...')
             # Update values to fix deprecated use_8bit_adam checkbox and set appropriate optimizer if it is set to True
-            my_data = update_optimizer(my_data)
+            my_data = update_my_data(my_data)
     else:
         file_path = original_file_path  # In case a file_path was provided and the user decide to cancel the open action
         my_data = {}
@@ -256,10 +259,17 @@ def open_configuration(
         if not key in ['file_path']:
             values.append(my_data.get(key, value))
 
+    # This next section is about making the LoCon parameters visible if LoRA_type = 'Standard'
+    if my_data.get('LoRA_type', 'Standard') == 'LoCon':
+        values.append(gr.Row.update(visible=True))
+    else:
+        values.append(gr.Row.update(visible=False))
+
     return tuple(values)
 
 
 def train_model(
+    print_only,
     pretrained_model_name_or_path,
     v2,
     v_parameterization,
@@ -285,7 +295,7 @@ def train_model(
     full_fp16,
     no_token_padding,
     stop_text_encoder_training_pct,
-    use_8bit_adam,
+    # use_8bit_adam,
     xformers,
     save_model_as,
     shuffle_caption,
@@ -318,9 +328,18 @@ def train_model(
     caption_dropout_every_n_epochs,
     caption_dropout_rate,
     optimizer,
-    optimizer_args,noise_offset, 
-    locon, conv_dim, conv_alpha,
-):  
+    optimizer_args,
+    noise_offset,
+    LoRA_type,
+    conv_dim,
+    conv_alpha,
+    sample_every_n_steps,
+    sample_every_n_epochs,
+    sample_sampler,
+    sample_prompts,additional_parameters,
+):
+    print_only_bool = True if print_only.get('label') == 'True' else False
+    
     if pretrained_model_name_or_path == '':
         msgbox('Source model information is missing')
         return
@@ -455,11 +474,24 @@ def train_model(
         run_cmd += f' --save_model_as={save_model_as}'
     if not float(prior_loss_weight) == 1.0:
         run_cmd += f' --prior_loss_weight={prior_loss_weight}'
-    if locon:
-        getlocon(os.path.exists(os.path.join(path_of_this_folder, 'locon')))
-        run_cmd += f' --network_module=locon.locon.locon_kohya'
-        run_cmd += f' --network_args "conv_dim={conv_dim}" "conv_alpha={conv_alpha}"'
-    else:
+    if LoRA_type == 'LoCon':
+        try:
+            import locon.locon_kohya
+        except ModuleNotFoundError:
+            print(
+                "\033[1;31mError:\033[0m The required module 'locon' is not installed. Please install by running \033[33mupgrade.ps1\033[0m before running this program."
+            )
+            return
+        run_cmd += f' --network_module=locon.locon_kohya'
+        run_cmd += (
+            f' --network_args "conv_dim={conv_dim}" "conv_alpha={conv_alpha}"'
+        )
+    if LoRA_type == 'Kohya LoCon':
+        run_cmd += f' --network_module=networks.lora'
+        run_cmd += (
+            f' --network_args "conv_lora_dim={conv_dim}" "conv_alpha={conv_alpha}"'
+        )
+    if LoRA_type == 'Standard':
         run_cmd += f' --network_module=networks.lora'
 
     if not (float(text_encoder_lr) == 0) or not (float(unet_lr) == 0):
@@ -522,7 +554,7 @@ def train_model(
         gradient_checkpointing=gradient_checkpointing,
         full_fp16=full_fp16,
         xformers=xformers,
-        use_8bit_adam=use_8bit_adam,
+        # use_8bit_adam=use_8bit_adam,
         keep_tokens=keep_tokens,
         persistent_data_loader_workers=persistent_data_loader_workers,
         bucket_no_upscale=bucket_no_upscale,
@@ -531,18 +563,34 @@ def train_model(
         caption_dropout_every_n_epochs=caption_dropout_every_n_epochs,
         caption_dropout_rate=caption_dropout_rate,
         noise_offset=noise_offset,
+        additional_parameters=additional_parameters,
     )
 
-    print(run_cmd)
-    # Run the command
-    subprocess.run(run_cmd)
+    run_cmd += run_cmd_sample(
+        sample_every_n_steps,
+        sample_every_n_epochs,
+        sample_sampler,
+        sample_prompts,
+        output_dir,
+    )
 
-    # check if output_dir/last is a folder... therefore it is a diffuser model
-    last_dir = pathlib.Path(f'{output_dir}/{output_name}')
+    if  print_only_bool:
+        print('\033[93m\nHere is the trainer command as a reference. It will not be executed:\033[0m\n')
+        print('\033[96m' + run_cmd + '\033[0m\n')
+    else:
+        print(run_cmd)
+        # Run the command
+        if os.name == 'posix':
+            os.system(run_cmd)
+        else:
+            subprocess.run(run_cmd)
 
-    if not last_dir.is_dir():
-        # Copy inference model for v2 if required
-        save_inference_file(output_dir, v2, v_parameterization, output_name)
+        # check if output_dir/last is a folder... therefore it is a diffuser model
+        last_dir = pathlib.Path(f'{output_dir}/{output_name}')
+
+        if not last_dir.is_dir():
+            # Copy inference model for v2 if required
+            save_inference_file(output_dir, v2, v_parameterization, output_name)
 
 
 def lora_tab(
@@ -579,27 +627,41 @@ def lora_tab(
             )
             train_data_dir_folder = gr.Button('📂', elem_id='open_folder_small')
             train_data_dir_folder.click(
-                get_folder_path, outputs=train_data_dir
+                get_folder_path,
+                outputs=train_data_dir,
+                show_progress=False,
             )
             reg_data_dir = gr.Textbox(
                 label='Regularisation folder',
                 placeholder='(Optional) Folder where where the regularization folders containing the images are located',
             )
             reg_data_dir_folder = gr.Button('📂', elem_id='open_folder_small')
-            reg_data_dir_folder.click(get_folder_path, outputs=reg_data_dir)
+            reg_data_dir_folder.click(
+                get_folder_path,
+                outputs=reg_data_dir,
+                show_progress=False,
+            )
         with gr.Row():
             output_dir = gr.Textbox(
                 label='Output folder',
                 placeholder='Folder to output trained model',
             )
             output_dir_folder = gr.Button('📂', elem_id='open_folder_small')
-            output_dir_folder.click(get_folder_path, outputs=output_dir)
+            output_dir_folder.click(
+                get_folder_path,
+                outputs=output_dir,
+                show_progress=False,
+            )
             logging_dir = gr.Textbox(
                 label='Logging folder',
                 placeholder='Optional: enable logging and output TensorBoard log to this folder',
             )
             logging_dir_folder = gr.Button('📂', elem_id='open_folder_small')
-            logging_dir_folder.click(get_folder_path, outputs=logging_dir)
+            logging_dir_folder.click(
+                get_folder_path,
+                outputs=logging_dir,
+                show_progress=False,
+            )
         with gr.Row():
             output_name = gr.Textbox(
                 label='Model output name',
@@ -634,6 +696,15 @@ def lora_tab(
         )
     with gr.Tab('Training parameters'):
         with gr.Row():
+            LoRA_type = gr.Dropdown(
+                label='LoRA type',
+                choices=[
+                    'Kohya LoCon',
+                    'LoCon',
+                    'Standard',
+                ],
+                value='Standard',
+            )
             lora_network_weights = gr.Textbox(
                 label='LoRA network weights',
                 placeholder='{Optional) Path to existing LoRA network weights to resume training',
@@ -645,6 +716,7 @@ def lora_tab(
                 get_any_file_path,
                 inputs=[lora_network_weights],
                 outputs=lora_network_weights,
+                show_progress=False,
             )
         (
             learning_rate,
@@ -666,6 +738,7 @@ def lora_tab(
             lr_scheduler_value='cosine',
             lr_warmup_value='10',
         )
+
         with gr.Row():
             text_encoder_lr = gr.Textbox(
                 label='Text Encoder learning rate',
@@ -693,6 +766,35 @@ def lora_tab(
                 step=1,
                 interactive=True,
             )
+
+        with gr.Row(visible=False) as LoCon_row:
+
+            # locon= gr.Checkbox(label='Train a LoCon instead of a general LoRA (does not support v2 base models) (may not be able to some utilities now)', value=False)
+            conv_dim = gr.Slider(
+                minimum=1,
+                maximum=512,
+                value=1,
+                step=1,
+                label='LoCon Convolution Rank (Dimension)',
+            )
+            conv_alpha = gr.Slider(
+                minimum=1,
+                maximum=512,
+                value=1,
+                step=1,
+                label='LoCon Convolution Alpha',
+            )
+        # Show of hide LoCon conv settings depending on LoRA type selection
+        def LoRA_type_change(LoRA_type):
+            print('LoRA type changed...')
+            if LoRA_type == 'LoCon' or LoRA_type == 'Kohya LoCon':
+                return gr.Group.update(visible=True)
+            else:
+                return gr.Group.update(visible=False)
+
+        LoRA_type.change(
+            LoRA_type_change, inputs=[LoRA_type], outputs=[LoCon_row]
+        )
         with gr.Row():
             max_resolution = gr.Textbox(
                 label='Max resolution',
@@ -708,22 +810,6 @@ def lora_tab(
             )
             enable_bucket = gr.Checkbox(label='Enable buckets', value=True)
         with gr.Accordion('Advanced Configuration', open=False):
-            with gr.Row():
-                locon= gr.Checkbox(label='Train a LoCon instead of a general LoRA (does not support v2 base models) (may not be able to some utilities now)', value=False)
-                conv_dim = gr.Slider(
-                    minimum=1,
-                    maximum=512,
-                    value=1,
-                    step=1,
-                    label='LoCon Convolution Rank (Dimension)',
-                )
-                conv_alpha = gr.Slider(
-                    minimum=1,
-                    maximum=512,
-                    value=1,
-                    step=1,
-                    label='LoCon Convolution Alpha',
-                )
             with gr.Row():
                 no_token_padding = gr.Checkbox(
                     label='No token padding', value=False
@@ -745,7 +831,7 @@ def lora_tab(
                     placeholder='(Optional) For Cosine with restart and polynomial only',
                 )
             (
-                use_8bit_adam,
+                # use_8bit_adam,
                 xformers,
                 full_fp16,
                 gradient_checkpointing,
@@ -766,7 +852,7 @@ def lora_tab(
                 bucket_reso_steps,
                 caption_dropout_every_n_epochs,
                 caption_dropout_rate,
-                noise_offset,
+                noise_offset,additional_parameters,
             ) = gradio_advanced_training()
             color_aug.change(
                 color_aug_changed,
@@ -774,11 +860,12 @@ def lora_tab(
                 outputs=[cache_latents],
             )
 
-        optimizer.change(
-            set_legacy_8bitadam,
-            inputs=[optimizer, use_8bit_adam],
-            outputs=[optimizer, use_8bit_adam],
-        )
+        (
+            sample_every_n_steps,
+            sample_every_n_epochs,
+            sample_sampler,
+            sample_prompts,
+        ) = sample_gradio_config()
 
     with gr.Tab('Tools'):
         gr.Markdown(
@@ -796,6 +883,8 @@ def lora_tab(
         gradio_verify_lora_tab()
 
     button_run = gr.Button('Train model', variant='primary')
+    
+    button_print = gr.Button('Print training command')
 
     # Setup gradio tensorboard buttons
     button_start_tensorboard, button_stop_tensorboard = gradio_tensorboard()
@@ -803,10 +892,12 @@ def lora_tab(
     button_start_tensorboard.click(
         start_tensorboard,
         inputs=logging_dir,
+        show_progress=False,
     )
 
     button_stop_tensorboard.click(
         stop_tensorboard,
+        show_progress=False,
     )
 
     settings_list = [
@@ -835,7 +926,7 @@ def lora_tab(
         full_fp16,
         no_token_padding,
         stop_text_encoder_training,
-        use_8bit_adam,
+        # use_8bit_adam,
         xformers,
         save_model_as,
         shuffle_caption,
@@ -868,31 +959,48 @@ def lora_tab(
         caption_dropout_every_n_epochs,
         caption_dropout_rate,
         optimizer,
-        optimizer_args,noise_offset, 
-        locon, conv_dim, conv_alpha,
+        optimizer_args,
+        noise_offset,
+        LoRA_type,
+        conv_dim,
+        conv_alpha,
+        sample_every_n_steps,
+        sample_every_n_epochs,
+        sample_sampler,
+        sample_prompts,additional_parameters,
     ]
 
     button_open_config.click(
         open_configuration,
         inputs=[config_file_name] + settings_list,
-        outputs=[config_file_name] + settings_list,
+        outputs=[config_file_name] + settings_list + [LoCon_row],
+        show_progress=False,
     )
 
     button_save_config.click(
         save_configuration,
         inputs=[dummy_db_false, config_file_name] + settings_list,
         outputs=[config_file_name],
+        show_progress=False,
     )
 
     button_save_as_config.click(
         save_configuration,
         inputs=[dummy_db_true, config_file_name] + settings_list,
         outputs=[config_file_name],
+        show_progress=False,
     )
 
     button_run.click(
         train_model,
-        inputs=settings_list,
+        inputs=[dummy_db_false] + settings_list,
+        show_progress=False,
+    )
+    
+    button_print.click(
+        train_model,
+        inputs=[dummy_db_true] + settings_list,
+        show_progress=False,
     )
 
     return (
