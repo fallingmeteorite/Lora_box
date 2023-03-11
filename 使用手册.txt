@@ -73,26 +73,7 @@ Do you want to run your training on CPU only (even if a GPU is available)? [yes/
 #
 然后出现：
 Do you wish to optimize your script with torch dynamo?[yes/NO]:  
-输入 yes
-#
-#
-#
-#
-然后出现：
-Which dynamo backend would you like to use?
-Please select a choice using the arrow or number keys, and selecting with enter
-    eager
-    aot_eager
- * inductor
-    nvfuser
-    aot_nvfuser
-    aot_cudagraphs
-    ofi
-    fx2trt
-    onnxrt
-    ipex
-按回车（Enter键）
-
+输入 no
 #
 #
 #
