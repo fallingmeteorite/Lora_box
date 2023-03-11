@@ -24,8 +24,8 @@ from library.common_gui import (
     gradio_training,
     gradio_config,
     gradio_source_model,
-    set_legacy_8bitadam,
-    update_optimizer,
+    # set_legacy_8bitadam,
+    update_my_data,
 )
 from library.tensorboard_gui import (
     gradio_tensorboard,
@@ -36,6 +36,7 @@ from library.dreambooth_folder_creation_gui import (
     gradio_dreambooth_folder_creation_tab,
 )
 from library.utilities import utilities_tab
+from library.sampler_gui import sample_gradio_config, run_cmd_sample
 from easygui import msgbox
 
 folder_symbol = '\U0001f4c2'  # 📂
@@ -72,7 +73,7 @@ def save_configuration(
     full_fp16,
     no_token_padding,
     stop_text_encoder_training,
-    use_8bit_adam,
+    # use_8bit_adam,
     xformers,
     save_model_as,
     shuffle_caption,
@@ -106,6 +107,10 @@ def save_configuration(
     optimizer,
     optimizer_args,
     noise_offset,
+    sample_every_n_steps,
+    sample_every_n_epochs,
+    sample_sampler,
+    sample_prompts,additional_parameters,
 ):
     # Get list of function parameters and values
     parameters = list(locals().items())
@@ -179,7 +184,7 @@ def open_configuration(
     full_fp16,
     no_token_padding,
     stop_text_encoder_training,
-    use_8bit_adam,
+    # use_8bit_adam,
     xformers,
     save_model_as,
     shuffle_caption,
@@ -213,6 +218,10 @@ def open_configuration(
     optimizer,
     optimizer_args,
     noise_offset,
+    sample_every_n_steps,
+    sample_every_n_epochs,
+    sample_sampler,
+    sample_prompts,additional_parameters,
 ):
     # Get list of function parameters and values
     parameters = list(locals().items())
@@ -223,20 +232,19 @@ def open_configuration(
     if not file_path == '' and not file_path == None:
         # load variables from JSON file
         with open(file_path, 'r') as f:
-            my_data_db = json.load(f)
-
+            my_data = json.load(f)
             print('Loading config...')
             # Update values to fix deprecated use_8bit_adam checkbox and set appropriate optimizer if it is set to True
-            my_data = update_optimizer(my_data)
+            my_data = update_my_data(my_data)
     else:
         file_path = original_file_path  # In case a file_path was provided and the user decide to cancel the open action
-        my_data_db = {}
+        my_data = {}
 
     values = [file_path]
     for key, value in parameters:
         # Set the value in the dictionary to the corresponding value in `my_data`, or the default value if not found
         if not key in ['file_path']:
-            values.append(my_data_db.get(key, value))
+            values.append(my_data.get(key, value))
     return tuple(values)
 
 
@@ -266,7 +274,7 @@ def train_model(
     full_fp16,
     no_token_padding,
     stop_text_encoder_training_pct,
-    use_8bit_adam,
+    # use_8bit_adam,
     xformers,
     save_model_as,
     shuffle_caption,
@@ -300,6 +308,10 @@ def train_model(
     optimizer,
     optimizer_args,
     noise_offset,
+    sample_every_n_steps,
+    sample_every_n_epochs,
+    sample_sampler,
+    sample_prompts,additional_parameters,
 ):
     if pretrained_model_name_or_path == '':
         msgbox('Source model information is missing')
@@ -477,7 +489,7 @@ def train_model(
         gradient_checkpointing=gradient_checkpointing,
         full_fp16=full_fp16,
         xformers=xformers,
-        use_8bit_adam=use_8bit_adam,
+        # use_8bit_adam=use_8bit_adam,
         keep_tokens=keep_tokens,
         persistent_data_loader_workers=persistent_data_loader_workers,
         bucket_no_upscale=bucket_no_upscale,
@@ -486,6 +498,7 @@ def train_model(
         caption_dropout_every_n_epochs=caption_dropout_every_n_epochs,
         caption_dropout_rate=caption_dropout_rate,
         noise_offset=noise_offset,
+        additional_parameters=additional_parameters,
     )
     run_cmd += f' --token_string="{token_string}"'
     run_cmd += f' --init_word="{init_word}"'
@@ -497,9 +510,21 @@ def train_model(
     elif template == 'style template':
         run_cmd += f' --use_style_template'
 
+    run_cmd += run_cmd_sample(
+        sample_every_n_steps,
+        sample_every_n_epochs,
+        sample_sampler,
+        sample_prompts,
+        output_dir,
+    )
+
     print(run_cmd)
+
     # Run the command
-    subprocess.run(run_cmd)
+    if os.name == 'posix':
+        os.system(run_cmd)
+    else:
+        subprocess.run(run_cmd)
 
     # check if output_dir/last is a folder... therefore it is a diffuser model
     last_dir = pathlib.Path(f'{output_dir}/{output_name}')
@@ -543,7 +568,9 @@ def ti_tab(
                 '📂', elem_id='open_folder_small'
             )
             train_data_dir_input_folder.click(
-                get_folder_path, outputs=train_data_dir
+                get_folder_path,
+                outputs=train_data_dir,
+                show_progress=False,
             )
             reg_data_dir = gr.Textbox(
                 label='Regularisation folder',
@@ -553,7 +580,9 @@ def ti_tab(
                 '📂', elem_id='open_folder_small'
             )
             reg_data_dir_input_folder.click(
-                get_folder_path, outputs=reg_data_dir
+                get_folder_path,
+                outputs=reg_data_dir,
+                show_progress=False,
             )
         with gr.Row():
             output_dir = gr.Textbox(
@@ -563,7 +592,11 @@ def ti_tab(
             output_dir_input_folder = gr.Button(
                 '📂', elem_id='open_folder_small'
             )
-            output_dir_input_folder.click(get_folder_path, outputs=output_dir)
+            output_dir_input_folder.click(
+                get_folder_path,
+                outputs=output_dir,
+                show_progress=False,
+            )
             logging_dir = gr.Textbox(
                 label='Logging folder',
                 placeholder='Optional: enable logging and output TensorBoard log to this folder',
@@ -572,7 +605,9 @@ def ti_tab(
                 '📂', elem_id='open_folder_small'
             )
             logging_dir_input_folder.click(
-                get_folder_path, outputs=logging_dir
+                get_folder_path,
+                outputs=logging_dir,
+                show_progress=False,
             )
         with gr.Row():
             output_name = gr.Textbox(
@@ -608,7 +643,11 @@ def ti_tab(
                 placeholder='(Optional) Path to existing TI embeding file to keep training',
             )
             weights_file_input = gr.Button('📂', elem_id='open_folder_small')
-            weights_file_input.click(get_file_path, outputs=weights)
+            weights_file_input.click(
+                get_file_path,
+                outputs=weights,
+                show_progress=False,
+            )
         with gr.Row():
             token_string = gr.Textbox(
                 label='Token string',
@@ -689,9 +728,13 @@ def ti_tab(
                     placeholder='(Optiona) path to checkpoint of vae to replace for training',
                 )
                 vae_button = gr.Button('📂', elem_id='open_folder_small')
-                vae_button.click(get_any_file_path, outputs=vae)
+                vae_button.click(
+                    get_any_file_path,
+                    outputs=vae,
+                    show_progress=False,
+                )
             (
-                use_8bit_adam,
+                # use_8bit_adam,
                 xformers,
                 full_fp16,
                 gradient_checkpointing,
@@ -712,18 +755,21 @@ def ti_tab(
                 bucket_reso_steps,
                 caption_dropout_every_n_epochs,
                 caption_dropout_rate,
-                noise_offset,
+                noise_offset,additional_parameters,
             ) = gradio_advanced_training()
             color_aug.change(
                 color_aug_changed,
                 inputs=[color_aug],
                 outputs=[cache_latents],
             )
-        optimizer.change(
-            set_legacy_8bitadam,
-            inputs=[optimizer, use_8bit_adam],
-            outputs=[optimizer, use_8bit_adam],
-        )
+
+        (
+            sample_every_n_steps,
+            sample_every_n_epochs,
+            sample_sampler,
+            sample_prompts,
+        ) = sample_gradio_config()
+
     with gr.Tab('Tools'):
         gr.Markdown(
             'This section provide Dreambooth tools to help setup your dataset...'
@@ -743,10 +789,12 @@ def ti_tab(
     button_start_tensorboard.click(
         start_tensorboard,
         inputs=logging_dir,
+        show_progress=False,
     )
 
     button_stop_tensorboard.click(
         stop_tensorboard,
+        show_progress=False,
     )
 
     settings_list = [
@@ -775,7 +823,7 @@ def ti_tab(
         full_fp16,
         no_token_padding,
         stop_text_encoder_training,
-        use_8bit_adam,
+        # use_8bit_adam,
         xformers,
         save_model_as,
         shuffle_caption,
@@ -809,29 +857,37 @@ def ti_tab(
         optimizer,
         optimizer_args,
         noise_offset,
+        sample_every_n_steps,
+        sample_every_n_epochs,
+        sample_sampler,
+        sample_prompts,additional_parameters,
     ]
 
     button_open_config.click(
         open_configuration,
         inputs=[config_file_name] + settings_list,
         outputs=[config_file_name] + settings_list,
+        show_progress=False,
     )
 
     button_save_config.click(
         save_configuration,
         inputs=[dummy_db_false, config_file_name] + settings_list,
         outputs=[config_file_name],
+        show_progress=False,
     )
 
     button_save_as_config.click(
         save_configuration,
         inputs=[dummy_db_true, config_file_name] + settings_list,
         outputs=[config_file_name],
+        show_progress=False,
     )
 
     button_run.click(
         train_model,
         inputs=settings_list,
+        show_progress=False,
     )
 
     return (

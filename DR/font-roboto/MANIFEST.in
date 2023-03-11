@@ -1,0 +1,7 @@
+include CHANGELOG.txt
+include LICENSE.txt
+include README.txt
+include setup.py
+recursive-include font_roboto *.py
+recursive-include font_roboto/files *.ttf
+include font_roboto/files/LICENSE

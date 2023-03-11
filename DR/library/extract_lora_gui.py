@@ -12,6 +12,7 @@ folder_symbol = '\U0001f4c2'  # 📂
 refresh_symbol = '\U0001f504'  # 🔄
 save_style_symbol = '\U0001f4be'  # 💾
 document_symbol = '\U0001F4C4'   # 📄
+PYTHON = 'python3' if os.name == 'posix' else './venv/Scripts/python.exe'
 
 
 def extract_lora(
@@ -21,6 +22,7 @@ def extract_lora(
     save_precision,
     dim,
     v2,
+    conv_dim,
 ):
     # Check for caption_text_input
     if model_tuned == '':
@@ -41,20 +43,25 @@ def extract_lora(
         return
 
     run_cmd = (
-        f'.\\venv\Scripts\python.exe "networks\extract_lora_from_models.py"'
+        f'{PYTHON} "{os.path.join("networks","extract_lora_from_models.py")}"'
     )
     run_cmd += f' --save_precision {save_precision}'
     run_cmd += f' --save_to "{save_to}"'
     run_cmd += f' --model_org "{model_org}"'
     run_cmd += f' --model_tuned "{model_tuned}"'
     run_cmd += f' --dim {dim}'
+    if conv_dim > 0:
+        run_cmd += f' --conv_dim {conv_dim}'
     if v2:
         run_cmd += f' --v2'
 
     print(run_cmd)
 
     # Run the command
-    subprocess.run(run_cmd)
+    if os.name == 'posix':
+        os.system(run_cmd)
+    else:
+        subprocess.run(run_cmd)
 
 
 ###
@@ -67,7 +74,7 @@ def gradio_extract_lora_tab():
         gr.Markdown(
             'This utility can extract a LoRA network from a finetuned model.'
         )
-        lora_ext = gr.Textbox(value='*.pt *.safetensors', visible=False)
+        lora_ext = gr.Textbox(value='*.safetensors *.pt', visible=False)
         lora_ext_name = gr.Textbox(value='LoRA model types', visible=False)
         model_ext = gr.Textbox(value='*.ckpt *.safetensors', visible=False)
         model_ext_name = gr.Textbox(value='Model types', visible=False)
@@ -85,6 +92,7 @@ def gradio_extract_lora_tab():
                 get_file_path,
                 inputs=[model_tuned, model_ext, model_ext_name],
                 outputs=model_tuned,
+                show_progress=False,
             )
 
             model_org = gr.Textbox(
@@ -99,6 +107,7 @@ def gradio_extract_lora_tab():
                 get_file_path,
                 inputs=[model_org, model_ext, model_ext_name],
                 outputs=model_org,
+                show_progress=False,
             )
         with gr.Row():
             save_to = gr.Textbox(
@@ -113,6 +122,7 @@ def gradio_extract_lora_tab():
                 get_saveasfilename_path,
                 inputs=[save_to, lora_ext, lora_ext_name],
                 outputs=save_to,
+                show_progress=False,
             )
             save_precision = gr.Dropdown(
                 label='Save precision',
@@ -126,7 +136,15 @@ def gradio_extract_lora_tab():
                 maximum=1024,
                 label='Network Dimension',
                 value=128,
-                step=4,
+                step=1,
+                interactive=True,
+            )
+            conv_dim = gr.Slider(
+                minimum=0,
+                maximum=1024,
+                label='Conv Dimension',
+                value=0,
+                step=1,
                 interactive=True,
             )
             v2 = gr.Checkbox(label='v2', value=False, interactive=True)
@@ -135,5 +153,6 @@ def gradio_extract_lora_tab():
 
         extract_button.click(
             extract_lora,
-            inputs=[model_tuned, model_org, save_to, save_precision, dim, v2],
+            inputs=[model_tuned, model_org, save_to, save_precision, dim, v2, conv_dim],
+            show_progress=False,
         )

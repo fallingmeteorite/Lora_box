@@ -9,11 +9,56 @@ refresh_symbol = '\U0001f504'  # 🔄
 save_style_symbol = '\U0001f4be'  # 💾
 document_symbol = '\U0001F4C4'   # 📄
 
+# define a list of substrings to search for v2 base models
+V2_BASE_MODELS = [
+    'stabilityai/stable-diffusion-2-1-base',
+    'stabilityai/stable-diffusion-2-base',
+]
 
-def update_optimizer(my_data):
-    if my_data.get('use_8bit_adam', False):
+# define a list of substrings to search for v_parameterization models
+V_PARAMETERIZATION_MODELS = [
+    'stabilityai/stable-diffusion-2-1',
+    'stabilityai/stable-diffusion-2',
+]
+
+# define a list of substrings to v1.x models
+V1_MODELS = [
+    'CompVis/stable-diffusion-v1-4',
+    'runwayml/stable-diffusion-v1-5',
+]
+
+# define a list of substrings to search for
+ALL_PRESET_MODELS = V2_BASE_MODELS + V_PARAMETERIZATION_MODELS + V1_MODELS
+
+
+def update_my_data(my_data):
+    if my_data.get('use_8bit_adam', False) == True:
         my_data['optimizer'] = 'AdamW8bit'
-        my_data['use_8bit_adam'] = False
+        # my_data['use_8bit_adam'] = False
+
+    if (
+        my_data.get('optimizer', 'missing') == 'missing'
+        and my_data.get('use_8bit_adam', False) == False
+    ):
+        my_data['optimizer'] = 'AdamW'
+
+    if my_data.get('model_list', 'custom') == []:
+        print('Old config with empty model list. Setting to custom...')
+        my_data['model_list'] = 'custom'
+
+    # If Pretrained model name or path is not one of the preset models then set the preset_model to custom
+    if not my_data.get('pretrained_model_name_or_path', '') in ALL_PRESET_MODELS:
+        my_data['model_list'] = 'custom'
+    
+    # Fix old config files that contain epoch as str instead of int
+    for key in ['epoch', 'save_every_n_epochs']:
+        value = my_data.get(key, -1)
+        if type(value) == str:
+            if value != '':
+                my_data[key] = int(value)
+            else:
+                my_data[key] = -1
+
     return my_data
 
 
@@ -88,17 +133,17 @@ def remove_doublequote(file_path):
     return file_path
 
 
-def set_legacy_8bitadam(optimizer, use_8bit_adam):
-    if optimizer == 'AdamW8bit':
-        # use_8bit_adam = True
-        return gr.Dropdown.update(value=optimizer), gr.Checkbox.update(
-            value=True, interactive=False, visible=True
-        )
-    else:
-        # use_8bit_adam = False
-        return gr.Dropdown.update(value=optimizer), gr.Checkbox.update(
-            value=False, interactive=False, visible=True
-        )
+# def set_legacy_8bitadam(optimizer, use_8bit_adam):
+#     if optimizer == 'AdamW8bit':
+#         # use_8bit_adam = True
+#         return gr.Dropdown.update(value=optimizer), gr.Checkbox.update(
+#             value=True, interactive=False, visible=True
+#         )
+#     else:
+#         # use_8bit_adam = False
+#         return gr.Dropdown.update(value=optimizer), gr.Checkbox.update(
+#             value=False, interactive=False, visible=True
+#         )
 
 
 def get_folder_path(folder_path=''):
@@ -272,59 +317,79 @@ def save_inference_file(output_dir, v2, v_parameterization, output_name):
                     )
 
 
-def set_pretrained_model_name_or_path_input(value, v2, v_parameterization):
-    # define a list of substrings to search for
-    substrings_v2 = [
-        'stabilityai/stable-diffusion-2-1-base',
-        'stabilityai/stable-diffusion-2-base',
-    ]
-
+def set_pretrained_model_name_or_path_input(
+    model_list, pretrained_model_name_or_path, v2, v_parameterization
+):
     # check if $v2 and $v_parameterization are empty and if $pretrained_model_name_or_path contains any of the substrings in the v2 list
-    if str(value) in substrings_v2:
+    if str(model_list) in V2_BASE_MODELS:
         print('SD v2 model detected. Setting --v2 parameter')
         v2 = True
         v_parameterization = False
-
-        return value, v2, v_parameterization
-
-    # define a list of substrings to search for v-objective
-    substrings_v_parameterization = [
-        'stabilityai/stable-diffusion-2-1',
-        'stabilityai/stable-diffusion-2',
-    ]
+        pretrained_model_name_or_path = str(model_list)
 
     # check if $v2 and $v_parameterization are empty and if $pretrained_model_name_or_path contains any of the substrings in the v_parameterization list
-    if str(value) in substrings_v_parameterization:
+    if str(model_list) in V_PARAMETERIZATION_MODELS:
         print(
             'SD v2 v_parameterization detected. Setting --v2 parameter and --v_parameterization'
         )
         v2 = True
         v_parameterization = True
+        pretrained_model_name_or_path = str(model_list)
 
-        return value, v2, v_parameterization
+    if str(model_list) in V1_MODELS:
+        v2 = False
+        v_parameterization = False
+        pretrained_model_name_or_path = str(model_list)
 
-    # define a list of substrings to v1.x
-    substrings_v1_model = [
-        'CompVis/stable-diffusion-v1-4',
-        'runwayml/stable-diffusion-v1-5',
-    ]
+    if model_list == 'custom':
+        if (
+            str(pretrained_model_name_or_path) in V1_MODELS
+            or str(pretrained_model_name_or_path) in V2_BASE_MODELS
+            or str(pretrained_model_name_or_path)
+            in V_PARAMETERIZATION_MODELS
+        ):
+            pretrained_model_name_or_path = ''
+            v2 = False
+            v_parameterization = False
+    return model_list, pretrained_model_name_or_path, v2, v_parameterization
 
-    if str(value) in substrings_v1_model:
+def set_v2_checkbox(
+    model_list, v2, v_parameterization
+):
+    # check if $v2 and $v_parameterization are empty and if $pretrained_model_name_or_path contains any of the substrings in the v2 list
+    if str(model_list) in V2_BASE_MODELS:
+        v2 = True
+        v_parameterization = False
+
+    # check if $v2 and $v_parameterization are empty and if $pretrained_model_name_or_path contains any of the substrings in the v_parameterization list
+    if str(model_list) in V_PARAMETERIZATION_MODELS:
+        v2 = True
+        v_parameterization = True
+
+    if str(model_list) in V1_MODELS:
         v2 = False
         v_parameterization = False
 
-        return value, v2, v_parameterization
+    return v2, v_parameterization
 
-    if value == 'custom':
-        value = ''
-        v2 = False
-        v_parameterization = False
+def set_model_list(
+    model_list,
+    pretrained_model_name_or_path,
+    v2,
+    v_parameterization,
+):
 
-        return value, v2, v_parameterization
+    if not pretrained_model_name_or_path in ALL_PRESET_MODELS:
+        model_list = 'custom'
+    else:
+        model_list = pretrained_model_name_or_path
+        
+    return model_list, v2, v_parameterization
 
-    ###
-    ### Gradio common GUI section
-    ###
+
+###
+### Gradio common GUI section
+###
 
 
 def gradio_config():
@@ -348,6 +413,15 @@ def gradio_config():
     )
 
 
+def get_pretrained_model_name_or_path_file(
+    model_list, pretrained_model_name_or_path
+):
+    pretrained_model_name_or_path = get_any_file_path(
+        pretrained_model_name_or_path
+    )
+    set_model_list(model_list, pretrained_model_name_or_path)
+
+
 def gradio_source_model():
     with gr.Tab('Source model'):
         # Define the input elements
@@ -355,6 +429,7 @@ def gradio_source_model():
             pretrained_model_name_or_path = gr.Textbox(
                 label='Pretrained model name or path',
                 placeholder='enter the path to custom model or name of pretrained model',
+                value='runwayml/stable-diffusion-v1-5',
             )
             pretrained_model_name_or_path_file = gr.Button(
                 document_symbol, elem_id='open_folder_small'
@@ -363,6 +438,7 @@ def gradio_source_model():
                 get_any_file_path,
                 inputs=pretrained_model_name_or_path,
                 outputs=pretrained_model_name_or_path,
+                show_progress=False,
             )
             pretrained_model_name_or_path_folder = gr.Button(
                 folder_symbol, elem_id='open_folder_small'
@@ -371,9 +447,10 @@ def gradio_source_model():
                 get_folder_path,
                 inputs=pretrained_model_name_or_path,
                 outputs=pretrained_model_name_or_path,
+                show_progress=False,
             )
             model_list = gr.Dropdown(
-                label='(Optional) Model Quick Pick',
+                label='Model Quick Pick',
                 choices=[
                     'custom',
                     'stabilityai/stable-diffusion-2-1-base',
@@ -383,6 +460,7 @@ def gradio_source_model():
                     'runwayml/stable-diffusion-v1-5',
                     'CompVis/stable-diffusion-v1-4',
                 ],
+                value='runwayml/stable-diffusion-v1-5',
             )
             save_model_as = gr.Dropdown(
                 label='Save trained model as',
@@ -397,18 +475,43 @@ def gradio_source_model():
             )
 
         with gr.Row():
-            v2 = gr.Checkbox(label='v2', value=True)
+            v2 = gr.Checkbox(label='v2', value=False)
             v_parameterization = gr.Checkbox(
                 label='v_parameterization', value=False
             )
+            v2.change(set_v2_checkbox, inputs=[model_list, v2, v_parameterization], outputs=[v2, v_parameterization],show_progress=False)
+            v_parameterization.change(set_v2_checkbox, inputs=[model_list, v2, v_parameterization], outputs=[v2, v_parameterization],show_progress=False)
         model_list.change(
             set_pretrained_model_name_or_path_input,
-            inputs=[model_list, v2, v_parameterization],
-            outputs=[
+            inputs=[
+                model_list,
                 pretrained_model_name_or_path,
                 v2,
                 v_parameterization,
             ],
+            outputs=[
+                model_list,
+                pretrained_model_name_or_path,
+                v2,
+                v_parameterization,
+            ],
+            show_progress=False,
+        )
+        # Update the model list and parameters when user click outside the button or field
+        pretrained_model_name_or_path.change(
+            set_model_list,
+            inputs=[
+                model_list,
+                pretrained_model_name_or_path,
+                v2,
+                v_parameterization,
+            ],
+            outputs=[
+                model_list,
+                v2,
+                v_parameterization,
+            ],
+            show_progress=False,
         )
     return (
         pretrained_model_name_or_path,
@@ -432,8 +535,8 @@ def gradio_training(
             value=1,
             step=1,
         )
-        epoch = gr.Textbox(label='Epoch', value=1)
-        save_every_n_epochs = gr.Textbox(label='Save every N epochs', value=1)
+        epoch = gr.Number(label='Epoch', value=1, precision=0)
+        save_every_n_epochs = gr.Number(label='Save every N epochs', value=1, precision=0)
         caption_extension = gr.Textbox(
             label='Caption Extension',
             placeholder='(Optional) Extension for caption files. default: .caption',
@@ -540,8 +643,8 @@ def run_cmd_training(**kwargs):
         f' --max_train_steps="{kwargs.get("max_train_steps", "")}"'
         if kwargs.get('max_train_steps')
         else '',
-        f' --save_every_n_epochs="{kwargs.get("save_every_n_epochs", "")}"'
-        if kwargs.get('save_every_n_epochs')
+        f' --save_every_n_epochs="{int(kwargs.get("save_every_n_epochs", 1))}"'
+        if int(kwargs.get('save_every_n_epochs'))
         else '',
         f' --mixed_precision="{kwargs.get("mixed_precision", "")}"'
         if kwargs.get('mixed_precision')
@@ -549,7 +652,9 @@ def run_cmd_training(**kwargs):
         f' --save_precision="{kwargs.get("save_precision", "")}"'
         if kwargs.get('save_precision')
         else '',
-        f' --seed="{kwargs.get("seed", "")}"' if kwargs.get('seed') else '',
+        f' --seed="{kwargs.get("seed", "")}"'
+        if kwargs.get('seed') != ""
+        else '',
         f' --caption_extension="{kwargs.get("caption_extension", "")}"'
         if kwargs.get('caption_extension')
         else '',
@@ -564,31 +669,12 @@ def run_cmd_training(**kwargs):
     return run_cmd
 
 
-# # This function takes a dictionary of keyword arguments and returns a string that can be used to run a command-line training script
-# def run_cmd_training(**kwargs):
-#     arg_map = {
-#         'learning_rate': ' --learning_rate="{}"',
-#         'lr_scheduler': ' --lr_scheduler="{}"',
-#         'lr_warmup_steps': ' --lr_warmup_steps="{}"',
-#         'train_batch_size': ' --train_batch_size="{}"',
-#         'max_train_steps': ' --max_train_steps="{}"',
-#         'save_every_n_epochs': ' --save_every_n_epochs="{}"',
-#         'mixed_precision': ' --mixed_precision="{}"',
-#         'save_precision': ' --save_precision="{}"',
-#         'seed': ' --seed="{}"',
-#         'caption_extension': ' --caption_extension="{}"',
-#         'cache_latents': ' --cache_latents',
-#         'optimizer': ' --use_lion_optimizer' if kwargs.get('optimizer') == 'Lion' else '',
-#     }
-
-#     options = [arg_map[key].format(value) for key, value in kwargs.items() if key in arg_map and value]
-
-#     cmd = ''.join(options)
-
-#     return cmd
-
-
 def gradio_advanced_training():
+    with gr.Row():
+        additional_parameters = gr.Textbox(
+            label='Additional parameters', 
+            placeholder='(Optional) Use to provide additional parameters not handled by the GUI. Eg: --some_parameters "value"',
+        )
     with gr.Row():
         keep_tokens = gr.Slider(
             label='Keep n tokens', value='0', minimum=0, maximum=32, step=1
@@ -621,9 +707,9 @@ def gradio_advanced_training():
         )
     with gr.Row():
         # This use_8bit_adam element should be removed in a future release as it is no longer used
-        use_8bit_adam = gr.Checkbox(
-            label='Use 8bit adam', value=False, visible=False
-        )
+        # use_8bit_adam = gr.Checkbox(
+        #     label='Use 8bit adam', value=False, visible=False
+        # )
         xformers = gr.Checkbox(label='Use xformers', value=True)
         color_aug = gr.Checkbox(label='Color augmentation', value=False)
         flip_aug = gr.Checkbox(label='Flip augmentation', value=False)
@@ -655,7 +741,11 @@ def gradio_advanced_training():
             placeholder='path to "last-state" state folder to resume from',
         )
         resume_button = gr.Button('📂', elem_id='open_folder_small')
-        resume_button.click(get_folder_path, outputs=resume)
+        resume_button.click(
+            get_folder_path,
+            outputs=resume,
+            show_progress=False,
+        )
         max_train_epochs = gr.Textbox(
             label='Max train epoch',
             placeholder='(Optional) Override number of epoch',
@@ -665,7 +755,7 @@ def gradio_advanced_training():
             placeholder='(Optional) Override number of epoch. Default: 8',
         )
     return (
-        use_8bit_adam,
+        # use_8bit_adam,
         xformers,
         full_fp16,
         gradient_checkpointing,
@@ -687,6 +777,7 @@ def gradio_advanced_training():
         caption_dropout_every_n_epochs,
         caption_dropout_rate,
         noise_offset,
+        additional_parameters,
     )
 
 
@@ -710,7 +801,7 @@ def run_cmd_advanced_training(**kwargs):
         f' --keep_tokens="{kwargs.get("keep_tokens", "")}"'
         if int(kwargs.get('keep_tokens', 0)) > 0
         else '',
-        f' --caption_dropout_every_n_epochs="{kwargs.get("caption_dropout_every_n_epochs", "")}"'
+        f' --caption_dropout_every_n_epochs="{int(kwargs.get("caption_dropout_every_n_epochs", 0))}"'
         if int(kwargs.get('caption_dropout_every_n_epochs', 0)) > 0
         else '',
         f' --caption_dropout_rate="{kwargs.get("caption_dropout_rate", "")}"'
@@ -729,7 +820,7 @@ def run_cmd_advanced_training(**kwargs):
         else '',
         ' --full_fp16' if kwargs.get('full_fp16') else '',
         ' --xformers' if kwargs.get('xformers') else '',
-        ' --use_8bit_adam' if kwargs.get('use_8bit_adam') else '',
+        # ' --use_8bit_adam' if kwargs.get('use_8bit_adam') else '',
         ' --persistent_data_loader_workers'
         if kwargs.get('persistent_data_loader_workers')
         else '',
@@ -738,38 +829,7 @@ def run_cmd_advanced_training(**kwargs):
         f' --noise_offset={float(kwargs.get("noise_offset", 0))}'
         if not kwargs.get('noise_offset', '') == ''
         else '',
+        f' {kwargs.get("additional_parameters", "")}'
     ]
     run_cmd = ''.join(options)
     return run_cmd
-
-
-# def run_cmd_advanced_training(**kwargs):
-#     arg_map = {
-#         'max_train_epochs': ' --max_train_epochs="{}"',
-#         'max_data_loader_n_workers': ' --max_data_loader_n_workers="{}"',
-#         'max_token_length': ' --max_token_length={}' if int(kwargs.get('max_token_length', 75)) > 75 else '',
-#         'clip_skip': ' --clip_skip={}' if int(kwargs.get('clip_skip', 1)) > 1 else '',
-#         'resume': ' --resume="{}"',
-#         'keep_tokens': ' --keep_tokens="{}"' if int(kwargs.get('keep_tokens', 0)) > 0 else '',
-#         'caption_dropout_every_n_epochs': ' --caption_dropout_every_n_epochs="{}"' if int(kwargs.get('caption_dropout_every_n_epochs', 0)) > 0 else '',
-#         'caption_dropout_rate': ' --caption_dropout_rate="{}"' if float(kwargs.get('caption_dropout_rate', 0)) > 0 else '',
-#         'bucket_reso_steps': ' --bucket_reso_steps={:d}' if int(kwargs.get('bucket_reso_steps', 64)) >= 1 else '',
-#         'save_state': ' --save_state',
-#         'mem_eff_attn': ' --mem_eff_attn',
-#         'color_aug': ' --color_aug',
-#         'flip_aug': ' --flip_aug',
-#         'shuffle_caption': ' --shuffle_caption',
-#         'gradient_checkpointing': ' --gradient_checkpointing',
-#         'full_fp16': ' --full_fp16',
-#         'xformers': ' --xformers',
-#         'use_8bit_adam': ' --use_8bit_adam',
-#         'persistent_data_loader_workers': ' --persistent_data_loader_workers',
-#         'bucket_no_upscale': ' --bucket_no_upscale',
-#         'random_crop': ' --random_crop',
-#     }
-
-#     options = [arg_map[key].format(value) for key, value in kwargs.items() if key in arg_map and value]
-
-#     cmd = ''.join(options)
-
-#     return cmd

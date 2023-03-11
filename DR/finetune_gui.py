@@ -18,8 +18,8 @@ from library.common_gui import (
     gradio_source_model,
     color_aug_changed,
     run_cmd_training,
-    set_legacy_8bitadam,
-    update_optimizer,
+    # set_legacy_8bitadam,
+    update_my_data,
 )
 from library.tensorboard_gui import (
     gradio_tensorboard,
@@ -27,11 +27,14 @@ from library.tensorboard_gui import (
     stop_tensorboard,
 )
 from library.utilities import utilities_tab
+from library.sampler_gui import sample_gradio_config, run_cmd_sample
 
 folder_symbol = '\U0001f4c2'  # 📂
 refresh_symbol = '\U0001f504'  # 🔄
 save_style_symbol = '\U0001f4be'  # 💾
 document_symbol = '\U0001F4C4'   # 📄
+
+PYTHON = 'python3' if os.name == 'posix' else './venv/Scripts/python.exe'
 
 
 def save_configuration(
@@ -68,7 +71,7 @@ def save_configuration(
     create_buckets,
     save_model_as,
     caption_extension,
-    use_8bit_adam,
+    # use_8bit_adam,
     xformers,
     clip_skip,
     save_state,
@@ -96,6 +99,10 @@ def save_configuration(
     optimizer,
     optimizer_args,
     noise_offset,
+    sample_every_n_steps,
+    sample_every_n_epochs,
+    sample_sampler,
+    sample_prompts,additional_parameters,
 ):
     # Get list of function parameters and values
     parameters = list(locals().items())
@@ -175,7 +182,7 @@ def open_config_file(
     create_buckets,
     save_model_as,
     caption_extension,
-    use_8bit_adam,
+    # use_8bit_adam,
     xformers,
     clip_skip,
     save_state,
@@ -203,6 +210,10 @@ def open_config_file(
     optimizer,
     optimizer_args,
     noise_offset,
+    sample_every_n_steps,
+    sample_every_n_epochs,
+    sample_sampler,
+    sample_prompts,additional_parameters,
 ):
     # Get list of function parameters and values
     parameters = list(locals().items())
@@ -213,20 +224,19 @@ def open_config_file(
     if not file_path == '' and not file_path == None:
         # load variables from JSON file
         with open(file_path, 'r') as f:
-            my_data_db = json.load(f)
-
+            my_data = json.load(f)
             print('Loading config...')
             # Update values to fix deprecated use_8bit_adam checkbox and set appropriate optimizer if it is set to True
-            my_data = update_optimizer(my_data)
+            my_data = update_my_data(my_data)
     else:
         file_path = original_file_path  # In case a file_path was provided and the user decide to cancel the open action
-        my_data_db = {}
+        my_data = {}
 
     values = [file_path]
     for key, value in parameters:
         # Set the value in the dictionary to the corresponding value in `my_data`, or the default value if not found
         if not key in ['file_path']:
-            values.append(my_data_db.get(key, value))
+            values.append(my_data.get(key, value))
     return tuple(values)
 
 
@@ -262,7 +272,7 @@ def train_model(
     generate_image_buckets,
     save_model_as,
     caption_extension,
-    use_8bit_adam,
+    # use_8bit_adam,
     xformers,
     clip_skip,
     save_state,
@@ -290,15 +300,17 @@ def train_model(
     optimizer,
     optimizer_args,
     noise_offset,
+    sample_every_n_steps,
+    sample_every_n_epochs,
+    sample_sampler,
+    sample_prompts,additional_parameters,
 ):
     # create caption json file
     if generate_caption_database:
         if not os.path.exists(train_dir):
             os.mkdir(train_dir)
 
-        run_cmd = (
-            f'./venv/Scripts/python.exe finetune/merge_captions_to_metadata.py'
-        )
+        run_cmd = f'{PYTHON} finetune/merge_captions_to_metadata.py'
         if caption_extension == '':
             run_cmd += f' --caption_extension=".caption"'
         else:
@@ -311,13 +323,14 @@ def train_model(
         print(run_cmd)
 
         # Run the command
-        subprocess.run(run_cmd)
+        if os.name == 'posix':
+            os.system(run_cmd)
+        else:
+            subprocess.run(run_cmd)
 
     # create images buckets
     if generate_image_buckets:
-        run_cmd = (
-            f'./venv/Scripts/python.exe finetune/prepare_buckets_latents.py'
-        )
+        run_cmd = f'{PYTHON} finetune/prepare_buckets_latents.py'
         run_cmd += f' "{image_folder}"'
         run_cmd += f' "{train_dir}/{caption_metadata_filename}"'
         run_cmd += f' "{train_dir}/{latent_metadata_filename}"'
@@ -335,7 +348,10 @@ def train_model(
         print(run_cmd)
 
         # Run the command
-        subprocess.run(run_cmd)
+        if os.name == 'posix':
+            os.system(run_cmd)
+        else:
+            subprocess.run(run_cmd)
 
     image_num = len(
         [
@@ -432,7 +448,7 @@ def train_model(
         gradient_checkpointing=gradient_checkpointing,
         full_fp16=full_fp16,
         xformers=xformers,
-        use_8bit_adam=use_8bit_adam,
+        # use_8bit_adam=use_8bit_adam,
         keep_tokens=keep_tokens,
         persistent_data_loader_workers=persistent_data_loader_workers,
         bucket_no_upscale=bucket_no_upscale,
@@ -441,11 +457,24 @@ def train_model(
         caption_dropout_every_n_epochs=caption_dropout_every_n_epochs,
         caption_dropout_rate=caption_dropout_rate,
         noise_offset=noise_offset,
+        additional_parameters=additional_parameters,
+    )
+
+    run_cmd += run_cmd_sample(
+        sample_every_n_steps,
+        sample_every_n_epochs,
+        sample_sampler,
+        sample_prompts,
+        output_dir,
     )
 
     print(run_cmd)
+
     # Run the command
-    subprocess.run(run_cmd)
+    if os.name == 'posix':
+        os.system(run_cmd)
+    else:
+        subprocess.run(run_cmd)
 
     # check if output_dir/last is a folder... therefore it is a diffuser model
     last_dir = pathlib.Path(f'{output_dir}/{output_name}')
@@ -491,7 +520,11 @@ def finetune_tab():
             train_dir_folder = gr.Button(
                 folder_symbol, elem_id='open_folder_small'
             )
-            train_dir_folder.click(get_folder_path, outputs=train_dir)
+            train_dir_folder.click(
+                get_folder_path,
+                outputs=train_dir,
+                show_progress=False,
+            )
 
             image_folder = gr.Textbox(
                 label='Training Image folder',
@@ -501,7 +534,9 @@ def finetune_tab():
                 folder_symbol, elem_id='open_folder_small'
             )
             image_folder_input_folder.click(
-                get_folder_path, outputs=image_folder
+                get_folder_path,
+                outputs=image_folder,
+                show_progress=False,
             )
         with gr.Row():
             output_dir = gr.Textbox(
@@ -511,7 +546,11 @@ def finetune_tab():
             output_dir_input_folder = gr.Button(
                 folder_symbol, elem_id='open_folder_small'
             )
-            output_dir_input_folder.click(get_folder_path, outputs=output_dir)
+            output_dir_input_folder.click(
+                get_folder_path,
+                outputs=output_dir,
+                show_progress=False,
+            )
 
             logging_dir = gr.Textbox(
                 label='Logging folder',
@@ -521,7 +560,9 @@ def finetune_tab():
                 folder_symbol, elem_id='open_folder_small'
             )
             logging_dir_input_folder.click(
-                get_folder_path, outputs=logging_dir
+                get_folder_path,
+                outputs=logging_dir,
+                show_progress=False,
             )
         with gr.Row():
             output_name = gr.Textbox(
@@ -609,7 +650,7 @@ def finetune_tab():
                     label='Gradient accumulate steps', value='1'
                 )
             (
-                use_8bit_adam,
+                # use_8bit_adam,
                 xformers,
                 full_fp16,
                 gradient_checkpointing,
@@ -630,18 +671,20 @@ def finetune_tab():
                 bucket_reso_steps,
                 caption_dropout_every_n_epochs,
                 caption_dropout_rate,
-                noise_offset,
+                noise_offset,additional_parameters,
             ) = gradio_advanced_training()
             color_aug.change(
                 color_aug_changed,
                 inputs=[color_aug],
                 outputs=[cache_latents],  # Not applicable to fine_tune.py
             )
-        optimizer.change(
-            set_legacy_8bitadam,
-            inputs=[optimizer, use_8bit_adam],
-            outputs=[optimizer, use_8bit_adam],
-        )
+
+        (
+            sample_every_n_steps,
+            sample_every_n_epochs,
+            sample_sampler,
+            sample_prompts,
+        ) = sample_gradio_config()
 
     button_run = gr.Button('Train model', variant='primary')
 
@@ -655,6 +698,7 @@ def finetune_tab():
 
     button_stop_tensorboard.click(
         stop_tensorboard,
+        show_progress=False,
     )
 
     settings_list = [
@@ -689,7 +733,7 @@ def finetune_tab():
         create_buckets,
         save_model_as,
         caption_extension,
-        use_8bit_adam,
+        # use_8bit_adam,
         xformers,
         clip_skip,
         save_state,
@@ -717,6 +761,10 @@ def finetune_tab():
         optimizer,
         optimizer_args,
         noise_offset,
+        sample_every_n_steps,
+        sample_every_n_epochs,
+        sample_sampler,
+        sample_prompts,additional_parameters,
     ]
 
     button_run.click(train_model, inputs=settings_list)
@@ -725,18 +773,21 @@ def finetune_tab():
         open_config_file,
         inputs=[config_file_name] + settings_list,
         outputs=[config_file_name] + settings_list,
+        show_progress=False,
     )
 
     button_save_config.click(
         save_configuration,
         inputs=[dummy_ft_false, config_file_name] + settings_list,
         outputs=[config_file_name],
+        show_progress=False,
     )
 
     button_save_as_config.click(
         save_configuration,
         inputs=[dummy_ft_true, config_file_name] + settings_list,
         outputs=[config_file_name],
+        show_progress=False,
     )
 
 
