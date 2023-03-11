@@ -38,6 +38,8 @@ os.system(r'pip install --use-pep517 --upgrade -r DE\requirements.txt --no-warn-
 os.system(r'pip install xformers-0.0.16-cp310-cp310-win_amd64.whl')
 os.system(r"python tools\cudann_1.8_install.py")
 print(r'运行完成')
+print(r'删除文件')
+os.remove("xformers-0.0.16-cp310-cp310-win_amd64.whl")
 print(r'4秒后退出')
 time.sleep(4)
 print(r'移动文件')
