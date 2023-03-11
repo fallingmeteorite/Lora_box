@@ -15,7 +15,7 @@ origin_path_three=r'cudnn_windows\cudnn_cnn_train64_8.dll'
 origin_path_four=r'cudnn_windows\cudnn_ops_infer64_8.dll'
 origin_path_five=r'cudnn_windows\cudnn_ops_train64_8.dll'
 origin_path_six=r'cudnn_windows\cudnn64_8.dll'
-new_file_name=r'DR'
+new_file_name=r'DR\cudnn_windows'
 try:
     shutil.move(origin_path_one, new_file_name)
     shutil.move(origin_path_two, new_file_name)
