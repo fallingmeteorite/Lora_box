@@ -2,7 +2,8 @@ import os
 import sys
 import requests
 import time
-
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 def download(url, file_path):
     # 重试计数
     count = 0
@@ -87,8 +88,6 @@ if os.path.exists('mwxKTEtelILoIbMbruuM.zip') == False:
             download("https://huggingface.co/Fallingmeteorite/xformers-0.0.17/resolve/main/xformers-0.0.17%2Bb89a493.d20230304-cp310-cp310-win_amd64.whl","xformers-0.0.17+b89a493.d20230304-cp310-cp310-win_amd64.whl")
             print(r'下载mwxKTEtelILoIbMbruuM.zip')
             download("https://b1.thefileditch.ch/mwxKTEtelILoIbMbruuM.zip","mwxKTEtelILoIbMbruuM.zip")
-            print(r'下载标注器')
-            download("https://huggingface.co/Fallingmeteorite/fastTagger/resolve/main/fastTagger.zip","fastTagger.zip")
             break
         else:
             print(r'输入错误，或未输入，请重新选择')
