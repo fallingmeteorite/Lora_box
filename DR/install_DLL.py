@@ -38,7 +38,7 @@ except:
     print("已存在")
 time.sleep(4)
 print("删除源文件")
-shutil.rmtree("cudnn_windows")
+os.remove(r"cudnn_windows\test.4403")
 os.remove("DR\mwxKTEtelILoIbMbruuM.zip")
 print("源文件删除完成")
 
