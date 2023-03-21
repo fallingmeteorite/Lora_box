@@ -10,6 +10,7 @@ while True:
     print(r' 2 阿里云镜像源')
     print(r' 3 中国科技大学镜像源')
     print(r' 4 豆瓣镜像源')
+    print(r' 5 不使用镜像源')
     buer_one = input(r'你想要使用的镜像源是：(请输入前面的数字):')
     if buer_one == '1':
         print(r'已选择：清华镜像源')
@@ -26,6 +27,10 @@ while True:
     elif buer_one == '4':
         print(r'已选择：豆瓣镜像源')
         net = (r'http://pypi.douban.com/simple/')
+        break
+    elif buer_one == '5':
+        print(r'已选择：不使用镜像源')
+        net = (r'https://pypi.org/simple')
         break
     else:
         print(r'输入错误，或未输入，请重新选择')
