@@ -67,6 +67,9 @@ if os.path.exists('mwxKTEtelILoIbMbruuM.zip') == False:
             print(r'https://huggingface.co/Fallingmeteorite/xformers-0.0.17/resolve/main/xformers-0.0.17%2Bb89a493.d20230304-cp310-cp310-win_amd64.whl')
             print(r'https://b1.thefileditch.ch/mwxKTEtelILoIbMbruuM.zip')
             print(r'https://huggingface.co/Fallingmeteorite/fastTagger/resolve/main/fastTagger.zip')
+            print(r'https://huggingface.co/Fallingmeteorite/torch/blob/main/torch-2.0.0.dev20230202%2Bcu116-cp310-cp310-win_amd64.whl')
+            print(r'https://huggingface.co/Fallingmeteorite/torch/blob/main/torchaudio-2.0.0.dev20230206%2Bcu116-cp310-cp310-win_amd64.whl')
+            print(r'https://huggingface.co/Fallingmeteorite/torch/blob/main/torchvision-0.15.0.dev20230206%2Bcu116-cp310-cp310-win_amd64.whl')
             print(r'这是所需文件的下载地址,复制并粘贴到下载器')
             print(r'下载完成后，将文件放入DR文件夹中重新运行：启动安装依赖程序,严禁修改文件名')
             print(r'等待检测通过,若未通过请检查文件是否放对')
@@ -88,6 +91,12 @@ if os.path.exists('mwxKTEtelILoIbMbruuM.zip') == False:
             download("https://huggingface.co/Fallingmeteorite/xformers-0.0.17/resolve/main/xformers-0.0.17%2Bb89a493.d20230304-cp310-cp310-win_amd64.whl","xformers-0.0.17+b89a493.d20230304-cp310-cp310-win_amd64.whl")
             print(r'下载mwxKTEtelILoIbMbruuM.zip')
             download("https://b1.thefileditch.ch/mwxKTEtelILoIbMbruuM.zip","mwxKTEtelILoIbMbruuM.zip")
+            print(r'下载torch-2.0.0.dev20230202+cu116-cp310-cp310-win_amd64.whl')
+            download("https://huggingface.co/Fallingmeteorite/torch/blob/main/torch-2.0.0.dev20230202%2Bcu116-cp310-cp310-win_amd64.whl", "torch-2.0.0.dev20230202+cu116-cp310-cp310-win_amd64.whl")
+            print(r'下载torchaudio-2.0.0.dev20230206+cu116-cp310-cp310-win_amd64.whl')
+            download("https://huggingface.co/Fallingmeteorite/torch/blob/main/torchaudio-2.0.0.dev20230206%2Bcu116-cp310-cp310-win_amd64.whl", "torchaudio-2.0.0.dev20230206+cu116-cp310-cp310-win_amd64.whl")
+            print(r'下载torchvision-0.15.0.dev20230206+cu116-cp310-cp310-win_amd64.whl')
+            download("https://huggingface.co/Fallingmeteorite/torch/blob/main/torchvision-0.15.0.dev20230206%2Bcu116-cp310-cp310-win_amd64.whl", "torchvision-0.15.0.dev20230206+cu116-cp310-cp310-win_amd64.whl")
             break
         else:
             print(r'输入错误，或未输入，请重新选择')
