@@ -39,7 +39,7 @@ while True:
 print(r'开始安装依赖包')
 os.system(r'python -V')
 try:
-   os.system(r'pip install torch-2.0.0.dev20230202+cu116-cp310-cp310-win_amd64.whl')
+    os.system(r'pip install torch-2.0.0.dev20230202+cu116-cp310-cp310-win_amd64.whl')
     os.system(r'pip install torchvision-0.15.0.dev20230206+cu116-cp310-cp310-win_amd64.whl')
     os.system(r'pip install torchaudio-2.0.0.dev20230206+cu116-cp310-cp310-win_amd64.whl')
     os.system(r'pip install dynamo==0.1.1')
