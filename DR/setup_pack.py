@@ -62,14 +62,14 @@ os.system(r"python tools\cudann_1.8_install.py")
 print(r'运行完成')
 while True:
     buer_two = input(r'是否删除无用文件(安装失败的不用)yes/no:')
-    if buer_one == 'yes':
+    if buer_two == 'yes':
         print(r'删除文件')
         os.remove("xformers-0.0.17+b89a493.d20230304-cp310-cp310-win_amd64.whl")
         os.remove("torch-2.0.0.dev20230202+cu116-cp310-cp310-win_amd64.whl")
         os.remove("torchaudio-2.0.0.dev20230206+cu116-cp310-cp310-win_amd64.whl")
         os.remove("torchvision-0.15.0.dev20230206+cu116-cp310-cp310-win_amd64.whl")
         break
-    elif buer_one == 'no':
+    elif buer_two == 'no':
         print(r'跳过')
         break
     else:
