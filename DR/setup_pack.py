@@ -38,14 +38,34 @@ while True:
 
 print(r'开始安装依赖包')
 os.system(r'python -V')
-os.system(r'pip install torch==1.12.1+cu116 torchvision==0.13.1+cu116 --extra-index-url https://download.pytorch.org/whl/cu116')
-os.system(r'pip install --use-pep517 --upgrade -r DE\requirements.txt --no-warn-script-location -i '+net)
-os.system(r'pip install xformers-0.0.16-cp310-cp310-win_amd64.whl')
-os.remove(r"cudnn_windows\test.4403")
+try:
+    os.system(r'pip install torch==1.12.1+cu116 torchvision==0.13.1+cu116 --extra-index-url https://download.pytorch.org/whl/cu116')
+    print(r"==========================================================================================================")
+    print(r"torch安装成功")
+except:
+    print(r"==========================================================================================================")
+    print(r"torch安装失败")
+try:
+    os.system(r'pip install --use-pep517 --upgrade -r DE\requirements.txt --no-warn-script-location -i '+net)
+    os.system(r'pip install xformers-0.0.16-cp310-cp310-win_amd64.whl')
+    print(r"==========================================================================================================")
+    print(r"依赖安装成功")
+except:
+    print(r"==========================================================================================================")
+    print(r"依赖安装失败")
 os.system(r"python tools\cudann_1.8_install.py")
 print(r'运行完成')
-print(r'删除文件')
-os.remove("pip install xformers-0.0.16-cp310-cp310-win_amd64.whl")
+while True:
+    buer_two = input(r'是否删除无用文件(安装失败的不用)yes/no:')
+    if buer_two == 'yes':
+        print(r'删除文件')
+        os.remove("pip install xformers-0.0.16-cp310-cp310-win_amd64.whl")
+        break
+    elif buer_two == 'no':
+        print(r'跳过')
+        break
+    else:
+        print(r'输入错误，或未输入，请重新选择')
 print(r'4秒后退出')
 time.sleep(4)
 print(r'移动文件')
