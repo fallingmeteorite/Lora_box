@@ -38,7 +38,9 @@ while True:
 
 print(r'开始安装依赖包')
 os.system(r'python -V')
-os.system(r'pip install numpy --pre torch[dynamo] torchvision torchaudio --force-reinstall --extra-index-url https://download.pytorch.org/whl/nightly/cu116')
+os.system(r'pip install torch-2.0.0.dev20230202+cu116-cp310-cp310-win_amd64.whl')
+os.system(r'torchvision-0.15.0.dev20230206+cu116-cp310-cp310-win_amd64.whl')
+os.system(r'torchaudio-2.0.0.dev20230206+cu116-cp310-cp310-win_amd64.whl')
 os.system(r'pip install --use-pep517 --upgrade -r DE\requirements.txt --no-warn-script-location -i '+net)
 os.system(r'pip install xformers-0.0.17+b89a493.d20230304-cp310-cp310-win_amd64.whl')
 os.system(r'pip install dynamo==0.1.1')
