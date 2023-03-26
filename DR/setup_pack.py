@@ -50,7 +50,7 @@ except:
 try:
     os.system(r'pip install --use-pep517 --upgrade -r DE\requirements.txt --no-warn-script-location -i '+net)
     os.system(r'pip install xformers-0.0.17+b89a493.d20230304-cp310-cp310-win_amd64.whl')
-    os.system(r'deepspeed-0.8.1+unknown-py3-none-any.whl')
+    os.system(r'pip install deepspeed-0.8.1+unknown-py3-none-any.whl')
     print(r"==========================================================================================================")
     print(r"依赖安装成功")
 except:
