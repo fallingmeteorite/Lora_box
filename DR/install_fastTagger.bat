@@ -1,5 +1,8 @@
 CALL activate %~dp0venv
 python install_fasttagger.py
 cd font-roboto
-pip install setup.py install
+python setup.py install
+cd..
+cd CLIP
+python setup.py install
 pause

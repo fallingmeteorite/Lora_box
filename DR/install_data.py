@@ -2,7 +2,8 @@ import os
 import sys
 import requests
 import time
-
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 def download(url, file_path):
     # 重试计数
     count = 0
@@ -55,7 +56,7 @@ def download(url, file_path):
     return file_path
 
 print(r'检测是否存在所需文件')
-if os.path.exists('mwxKTEtelILoIbMbruuM.zip') == False:
+if os.path.exists('torchvision-0.15.0.dev20230206+cu116-cp310-cp310-win_amd64.whl') == False:
     while True:
         print(r'所需文件并未存在')
         print(r'以下有两种方法')
@@ -63,9 +64,12 @@ if os.path.exists('mwxKTEtelILoIbMbruuM.zip') == False:
         print(r' 2 手动用下载器下载(速度最快)')
         buer_three = input('你的选择是？(输入方法前面的数字):')
         if buer_three == '2':
-            print(r'https://huggingface.co/Fallingmeteorite/xformers0.0.14_and_xformers0.0.16/resolve/main/xformers-0.0.16-cp310-cp310-win_amd64.whl')
+            print(r'https://huggingface.co/Fallingmeteorite/xformers-0.0.17/resolve/main/xformers-0.0.17%2Bb89a493.d20230304-cp310-cp310-win_amd64.whl')
             print(r'https://b1.thefileditch.ch/mwxKTEtelILoIbMbruuM.zip')
             print(r'https://huggingface.co/Fallingmeteorite/fastTagger/resolve/main/fastTagger.zip')
+            print(r'https://huggingface.co/Fallingmeteorite/torch/resolve/main/torch-2.0.0.dev20230202%2Bcu116-cp310-cp310-win_amd64.whl')
+            print(r'https://huggingface.co/Fallingmeteorite/torch/resolve/main/torchaudio-2.0.0.dev20230206%2Bcu116-cp310-cp310-win_amd64.whl')
+            print(r'https://huggingface.co/Fallingmeteorite/torch/resolve/main/torchvision-0.15.0.dev20230206%2Bcu116-cp310-cp310-win_amd64.whl')
             print(r'这是所需文件的下载地址,复制并粘贴到下载器')
             print(r'下载完成后，将文件放入DR文件夹中重新运行：启动安装依赖程序,严禁修改文件名')
             print(r'等待检测通过,若未通过请检查文件是否放对')
@@ -83,12 +87,16 @@ if os.path.exists('mwxKTEtelILoIbMbruuM.zip') == False:
         elif buer_three == '1':
             print(r'请保证网络畅通，即将开始下载文件')
             print(r'花费时间根据网速决定')
-            print(r'下载xformers-0.0.16')
-            download("https://huggingface.co/Fallingmeteorite/xformers0.0.14_and_xformers0.0.16/resolve/main/xformers-0.0.16-cp310-cp310-win_amd64.whl","xformers-0.0.16-cp310-cp310-win_amd64.whl")
+            print(r'下载xformers-0.0.17')
+            download("https://huggingface.co/Fallingmeteorite/xformers-0.0.17/resolve/main/xformers-0.0.17%2Bb89a493.d20230304-cp310-cp310-win_amd64.whl","xformers-0.0.17+b89a493.d20230304-cp310-cp310-win_amd64.whl")
             print(r'下载mwxKTEtelILoIbMbruuM.zip')
             download("https://b1.thefileditch.ch/mwxKTEtelILoIbMbruuM.zip","mwxKTEtelILoIbMbruuM.zip")
-            print(r'下载标注器')
-            download("https://huggingface.co/Fallingmeteorite/fastTagger/resolve/main/fastTagger.zip","fastTagger.zip")
+            print(r'下载torch')
+            download("https://huggingface.co/Fallingmeteorite/torch/resolve/main/torch-2.0.0.dev20230202%2Bcu116-cp310-cp310-win_amd64.whl", "torch-2.0.0.dev20230202+cu116-cp310-cp310-win_amd64.whl")
+            print(r'下载torchaudio')
+            download("https://huggingface.co/Fallingmeteorite/torch/resolve/main/torchaudio-2.0.0.dev20230206%2Bcu116-cp310-cp310-win_amd64.whl", "torchaudio-2.0.0.dev20230206+cu116-cp310-cp310-win_amd64.whl")
+            print(r'下载torchvision')
+            download("https://huggingface.co/Fallingmeteorite/torch/resolve/main/torchvision-0.15.0.dev20230206%2Bcu116-cp310-cp310-win_amd64.whl", "torchvision-0.15.0.dev20230206+cu116-cp310-cp310-win_amd64.whl")
             break
         else:
             print(r'输入错误，或未输入，请重新选择')

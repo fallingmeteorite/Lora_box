@@ -1,7 +1,7 @@
 import os
-print(r'目标环境python3.10.8')
+print(r'目标环境python3.10.6')
 print(r'开始创建环境')
-os.system(r'conda create --prefix=venv python=3.10.8 -y')
+os.system(r'conda create --prefix=venv python=3.10.6 -y')
 filepath = (r'venv')
 if os.path.isdir(filepath):
     print('=====================================================================================================')
