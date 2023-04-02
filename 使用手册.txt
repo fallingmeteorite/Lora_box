@@ -86,19 +86,6 @@ Do you want to use DeepSpeed? [yes/NO]:
 #
 #
 #
-然后出现：
-What GPU(s) (by id) should be used for training on this machine as a comma-seperated list? [all]:   
-按回车（Enter键）            
-#
-#
-#
-#
-然后出现：
-Do you wish to use FP16 or BF16 (mixed precision)?
-Please select a choice using the arrow or number keys, and selecting with enter
- * noo                                                                                                                      
-   fp16                                                                                                                    
-   bf16
 按数字键1,按回车（Enter键）                                                                                                     
 ============================================
 等到命令行出现“Press any key to continue . . .”
