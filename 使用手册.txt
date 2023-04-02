@@ -80,7 +80,7 @@ Do you wish to optimize your script with torch dynamo?[yes/NO]:
 #
 然后出现：
 Do you want to use DeepSpeed? [yes/NO]:  
-输入 no
+输入 yes
 按回车（Enter键）
 #
 #
