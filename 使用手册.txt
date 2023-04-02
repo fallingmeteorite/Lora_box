@@ -156,7 +156,7 @@ B:点击“关闭所有已启动的训练”在重试。
 ================
 A:训练时报错：The paging file is too small for this operation to complete. Error loading "XXXXX" or one of its dependencies.
 翻译为页面文件太小，无法完成操作
-B:按照这个链接https://blog.csdn.net/JustPeanut/article/details/119143604  加大虚拟内存！！！
+B:按照这个链接https://blog.csdn.net/JustPeanut/article/details/119143604  加大虚拟内存！！
 ================
 A:报错：
 Looking in indexes: https://pypi.tuna.tsinghua.edu.cn/simple
