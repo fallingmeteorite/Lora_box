@@ -64,7 +64,7 @@ if os.path.exists('mwxKTEtelILoIbMbruuM.zip') == False:
         print(r' 2 手动用下载器下载(速度最快)')
         buer_three = input('你的选择是？(输入方法前面的数字):')
         if buer_three == '2':
-            print(r'https://huggingface.co/Fallingmeteorite/xformers-0.0.17/resolve/main/xformers-0.0.17%2Bb89a493.d20230304-cp310-cp310-win_amd64.whl')
+            print(r'https://huggingface.co/Fallingmeteorite/xformers0.0.14_and_xformers0.0.16/resolve/main/xformers-0.0.16-cp310-cp310-win_amd64.whl')
             print(r'https://b1.thefileditch.ch/mwxKTEtelILoIbMbruuM.zip')
             print(r'https://huggingface.co/Fallingmeteorite/fastTagger/resolve/main/fastTagger.zip')
             print(r'这是所需文件的下载地址,复制并粘贴到下载器')
@@ -85,7 +85,7 @@ if os.path.exists('mwxKTEtelILoIbMbruuM.zip') == False:
             print(r'请保证网络畅通，即将开始下载文件')
             print(r'花费时间根据网速决定')
             print(r'下载xformers-0.0.17')
-            download("https://huggingface.co/Fallingmeteorite/xformers-0.0.17/resolve/main/xformers-0.0.17%2Bb89a493.d20230304-cp310-cp310-win_amd64.whl","xformers-0.0.17+b89a493.d20230304-cp310-cp310-win_amd64.whl")
+            download("https://huggingface.co/Fallingmeteorite/xformers0.0.14_and_xformers0.0.16/resolve/main/xformers-0.0.16-cp310-cp310-win_amd64.whl","xformers-0.0.16-cp310-cp310-win_amd64.whl")
             print(r'下载mwxKTEtelILoIbMbruuM.zip')
             download("https://b1.thefileditch.ch/mwxKTEtelILoIbMbruuM.zip","mwxKTEtelILoIbMbruuM.zip")
             break
