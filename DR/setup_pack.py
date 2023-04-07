@@ -47,7 +47,7 @@ except:
     print(r"torch安装失败")
 try:
     os.system(r'pip install --use-pep517 --upgrade -r DE\requirements.txt --no-warn-script-location -i '+net)
-    os.system(r'pip install xformers-0.0.16-cp310-cp310-win_amd64.whl')
+    os.system(r'pip install xformers-0.0.14.dev0-cp310-cp310-win_amd64.whl')
     print(r"==========================================================================================================")
     print(r"依赖安装成功")
 except:
@@ -59,7 +59,7 @@ while True:
     buer_two = input(r'是否删除无用文件(安装失败的不用)yes/no:')
     if buer_two == 'yes':
         print(r'删除文件')
-        os.remove("pip install xformers-0.0.16-cp310-cp310-win_amd64.whl")
+        os.remove("xformers-0.0.14.dev0-cp310-cp310-win_amd64.whl")
         break
     elif buer_two == 'no':
         print(r'跳过')
