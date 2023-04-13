@@ -6,16 +6,10 @@ removenohunman 识别的标签里面找不到人类标签或者超出边框的情况下删除标注图片
 threshold 置信分 越小输出的tag数量越多
 useinterrogator 使用BLIP进行额外标注  生成的tags会变成自然语言描述+tags描述
 使用说明！！！！！！！！！！！！！！！！！！！！！！！！！！！
-先点击“开启图片标注软件”
-等待文件下载完成，
-等到命令行出现
-No module 'xformers'. Proceeding without it.
-Running on local URL:  http://127.0.0.1:7860
-
-To create a public link, set `share=True` in `launch()`.点击“关闭所有已启动的训练”按钮退出
-点击“打开标注图片存放文件处”
+点击“安装打标器软件”
 放入图片
-在点击“开启图片标注软件”
+点击“打开标注图片存放处”
+点击“启动图片标注程序”
 等程序运行完
-点击“打开标注图片存放文件处”
+点击“打开标注图片存放处”
 取回图片及其标注文件
