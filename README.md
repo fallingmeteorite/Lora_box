@@ -113,7 +113,7 @@ E:\Python\Library\mingw-w64\bin
 
 在目标文件夹打开cmd
 
-输入 git clone https://github.com/fallingmeteorite/DreamBooth_with_Lora.git
+克隆对应版本
 
 进入,观看里面的使用说明
 
