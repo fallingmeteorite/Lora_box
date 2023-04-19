@@ -2,10 +2,10 @@
 
 这个整合包是给一些新手小白使用的.
 
-# ！！！！！！！！！！！！！！！！！！！！
-# 提醒：一些特殊版本会在releases放出！！！
-# ！！！！！！！！！！！！！！！！！！！！
+# 提醒
+提醒：一些特殊版本会在releases放出
 
+# 说明
 它也可以解决一些人因为环境问题而装不上的问题.
 
 警告：这个整合包适用于windows10及其以上系统，
@@ -24,8 +24,6 @@
 
 # 使用要求
 
-这个整合包的训练代码来源：https://github.com/bmaltais/kohya_ss
-
 电脑必须安装Anaconda软件,这是必须的!
 
 Anaconda软件官方网站：https://www.anaconda.com/
@@ -34,10 +32,15 @@ Anaconda软件官方网站：https://www.anaconda.com/
 
 清华镜像源官方网站：https://mirrors.tuna.tsinghua.edu.cn/help/anaconda/
 
+# 整合文件来源
+这个整合包的训练代码来源：https://github.com/bmaltais/kohya_ss
+
+Github加速器来源：https://github.com/dotnetcore/FastGithub
+
 # 配置Anaconda软件
 
 直接点击开始安装
-
+图片来源于网上
 ![1](https://user-images.githubusercontent.com/86793086/221332894-352ef507-1fa3-4504-8c21-8647dfa11271.png)
 
 一般来说，大家的电脑只有一个账户，默认选择Just me，如果你的电脑有多个账户，那就选择All Users
@@ -113,12 +116,12 @@ E:\Python\Library\mingw-w64\bin
 
 在目标文件夹打开cmd
 
-输入 git clone https://github.com/fallingmeteorite/DreamBooth_with_Lora.git
+输入对应的克隆代码
 
-进入,观看里面的使用说明
+进入克隆的文件夹,观看里面的使用说明
 
 # 如何更新
 
 在目标文件夹打开cmd
 
-输入 git pull
+输入 git pull或在启动器中更新
